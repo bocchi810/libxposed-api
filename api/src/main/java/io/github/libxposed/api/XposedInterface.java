@@ -15,9 +15,6 @@ import java.lang.reflect.Member;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 
-import io.github.libxposed.api.annotations.AfterInvocation;
-import io.github.libxposed.api.annotations.BeforeInvocation;
-import io.github.libxposed.api.annotations.XposedHooker;
 import io.github.libxposed.api.errors.HookFailedError;
 import io.github.libxposed.api.utils.DexParser;
 
@@ -166,9 +163,8 @@ public interface XposedInterface {
      * like the old API.
      *
      * <p>
-     * Classes implementing this interface should be annotated with {@link XposedHooker} and should provide
-     * two public static methods that are annotated with {@link BeforeInvocation} and {@link AfterInvocation},
-     * respectively.
+     * Classes implementing this interface should should provide two public static methods named
+     * before and after for before invocation and after invocation respectively.
      * </p>
      *
      * <p>
@@ -187,30 +183,24 @@ public interface XposedInterface {
      * <p>Example usage:</p>
      *
      * <pre>{@code
-     *   @XposedHooker
      *   public class ExampleHooker implements Hooker {
      *
-     *       @BeforeInvocation
      *       public static void before(@NonNull BeforeHookCallback callback) {
      *           // Pre-hooking logic goes here
      *       }
      *
-     *       @AfterInvocation
      *       public static void after(@NonNull AfterHookCallback callback) {
      *           // Post-hooking logic goes here
      *       }
      *   }
      *
-     *   @XposedHooker
      *   public class ExampleHookerWithContext implements Hooker {
      *
-     *       @BeforeInvocation
      *       public static MyContext before(@NonNull BeforeHookCallback callback) {
      *           // Pre-hooking logic goes here
      *           return new MyContext();
      *       }
      *
-     *       @AfterInvocation
      *       public static void after(@NonNull AfterHookCallback callback, MyContext context) {
      *           // Post-hooking logic goes here
      *       }
@@ -366,6 +356,17 @@ public interface XposedInterface {
     Object invokeOrigin(@NonNull Method method, @Nullable Object thisObject, Object... args) throws InvocationTargetException, IllegalArgumentException, IllegalAccessException;
 
     /**
+     * Basically the same as {@link Constructor#newInstance(Object...)}, but calls the original constructor
+     * as it was before the interception by Xposed.
+     * @param constructor The constructor to create and initialize a new instance
+     * @param thisObject  The instance to be constructed
+     * @param args        The arguments used for the construction
+     * @param <T>         The type of the instance
+     * @see Constructor#newInstance(Object...)
+     */
+    <T> void invokeOrigin(@NonNull Constructor<T> constructor, @NonNull T thisObject, Object... args) throws InvocationTargetException, IllegalArgumentException, IllegalAccessException;
+
+    /**
      * Invokes a special (non-virtual) method on a given object instance, similar to the functionality of
      * {@code CallNonVirtual<type>Method} in JNI, which invokes an instance (nonstatic) method on a Java
      * object. This method is useful when you need to call a specific method on an object, bypassing any
@@ -381,6 +382,21 @@ public interface XposedInterface {
      */
     @Nullable
     Object invokeSpecial(@NonNull Method method, @NonNull Object thisObject, Object... args) throws InvocationTargetException, IllegalArgumentException, IllegalAccessException;
+
+    /**
+     * Invokes a special (non-virtual) method on a given object instance, similar to the functionality of
+     * {@code CallNonVirtual<type>Method} in JNI, which invokes an instance (nonstatic) method on a Java
+     * object. This method is useful when you need to call a specific method on an object, bypassing any
+     * overridden methods in subclasses and directly invoking the method defined in the specified class.
+     *
+     * <p>This method is useful when you need to call {@code super.xxx()} in a hooked constructor.</p>
+     *
+     * @param constructor The constructor to create and initialize a new instance
+     * @param thisObject  The instance to be constructed
+     * @param args        The arguments used for the construction
+     * @see Constructor#newInstance(Object...)
+     */
+    <T> void invokeSpecial(@NonNull Constructor<T> constructor, @NonNull T thisObject, Object... args) throws InvocationTargetException, IllegalArgumentException, IllegalAccessException;
 
     /**
      * Basically the same as {@link Constructor#newInstance(Object...)}, but calls the original constructor
